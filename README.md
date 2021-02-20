@@ -1,2 +1,3 @@
 # MentorMaster
-Tutoring Center queue bot for discord
+Tutoring Center queue bot for discord updated to fit
+the needs of WiCHacks

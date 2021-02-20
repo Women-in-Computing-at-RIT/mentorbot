@@ -1,10 +1,7 @@
 import discord
-import datetime
 
 from custom_queue import Queue
 from server import Server
-from stats_manager import Stat
-from hour import Hour
 
 client = discord.Client()  # Client initialization
 guild_collection = dict()
@@ -182,16 +179,12 @@ async def shift(message):
         await user.add_roles(server.get_role("off-duty mentor"))
         await user.remove_roles(server.get_role("on-duty mentor"))
         await who(server, message.guild)
-        server.stat_set[user.id].update()
     else:
         server.on_duty.append(user)
         await message.channel.send("You are now listed as available")
         await user.remove_roles(server.get_role("off-duty mentor"))
         await user.add_roles(server.get_role("on-duty mentor"))
         await who(server, message.guild)
-        if user.id not in server.stat_set:
-            server.stat_set[user.id] = Stat()
-        server.stat_set[user.id].add_hours(Hour(datetime.datetime.now()))
 
 
 async def show(message):
@@ -284,36 +277,6 @@ async def who(server, guild):
         await channel.send(embed=staff_embed)
 
 
-async def show_stats(message):
-    divided = message.content.strip().split()
-    server = guild_collection[message.guild.id]
-    if not server.admin_check(message.author):
-        return
-    if len(divided) != 1:
-        await message.channel.send("`-stats` takes no arguments")
-        return
-    guild = message.guild
-    for id in server.stat_set:
-        to_display = "```"
-        user = guild.get_member(id)
-        try:
-            if user.nick is not None:
-                to_display += user.nick
-            else:
-                to_display += user.name
-        except:
-            to_display += user.name
-        to_display += "\n"
-        to_display += str(server.stat_set[id])
-        server.stat_set[id].clear()
-        await message.channel.send(to_display)
-    student_stats = "Total Students Queued: " + str(server.students_queued) + \
-                    "\nTotal Students Helped: " + str(server.students_helped)
-    await message.channel.send(student_stats)
-    server.students_helped = 0
-    server.students_queued = 0
-
-
 async def reload(message):
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
@@ -378,8 +341,6 @@ async def on_message(message):
         await remove(message)
     elif command == "-reload":
         await reload(message)
-    elif command == "-stats":
-        await show_stats(message)
 
 
 def main():
