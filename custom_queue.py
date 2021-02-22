@@ -19,6 +19,9 @@ class Queue:
     def get_front(self):
         return self.students[0]
 
+    def get_topic(self):
+        return self.name
+
     def __str__(self):
         to_return = "The current queue for " + self.name + ":"
         pos = 1

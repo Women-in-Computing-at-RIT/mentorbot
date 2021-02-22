@@ -289,6 +289,21 @@ async def reload(message):
         await message.channel.send("`-reload` does not accept any arguments")
 
 
+async def show_queues(message):
+    divided = message.content.strip().split()
+    server = guild_collection[message.guild.id]
+    mstr_str = "The Queues are:\n"
+    if len(divided) == 1:
+        for queue in server.queues:
+            if server.queues[queue].joinable:
+                mstr_str += server.queues[queue].get_topic() + "\n"
+        await message.channel.send(mstr_str)
+        return
+    else:
+        await message.channel.send("Usage: `-showqueues")
+        return
+
+
 def get_channel(target, guild):
     for channel in guild.channels:
         if channel.name.lower() == target.lower():
@@ -341,6 +356,8 @@ async def on_message(message):
         await remove(message)
     elif command == "-reload":
         await reload(message)
+    elif command == "-showqueues":
+        await show_queues(message)
 
 
 def main():
