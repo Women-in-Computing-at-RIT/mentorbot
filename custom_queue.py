@@ -8,6 +8,7 @@ class Queue:
         self.children = []
         self.students = []
         self.name = name
+        self.tables = 1
 
     async def join_queue(self, message):
         self.students.append(message.author)
@@ -21,6 +22,12 @@ class Queue:
 
     def get_topic(self):
         return self.name
+
+    def new_queue_table(self):
+        self.tables += 1
+        if self.tables > 15:
+            self.tables = 2
+        return self.tables - 1
 
     def __str__(self):
         to_return = "The current queue for " + self.name + ":"

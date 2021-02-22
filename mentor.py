@@ -5,6 +5,7 @@ from server import Server
 
 client = discord.Client()  # Client initialization
 guild_collection = dict()
+mentor_categories = dict()
 
 
 async def help_manager(message):
@@ -16,27 +17,25 @@ async def help_manager(message):
         help_embed.type = "rich"
         help_embed.colour = discord.colour.Color.blue()
         if server.validate(message.author):
-            help_embed.add_field(name="\"-add (name) [-h | parent_name]\"",
-                                 value="(Admins Only), create a new queue)", inline=False)
-            help_embed.add_field(name="\"-delete (name)\"",
-                                 value="(Admins Only), Delete the queue)", inline=False)
-            help_embed.add_field(name="\"-reload\"",
-                                 value="(Admins Only), reload all configurations and reset queues)", inline=False)
-            help_embed.add_field(name="\"-empty\"",
-                                 value="(Admins Only), empty all queues)", inline=False)
-            help_embed.add_field(name="\"-stats\"",
-                                 value="(Admins Only), show hour logs and student stats, clears data after display)",
-                                 inline=False)
+            if server.admin_check(message.author):
+                help_embed.add_field(name="\"-add (name) [-h | parent_name]\"",
+                                     value="(Admins Only), create a new queue)", inline=False)
+                help_embed.add_field(name="\"-delete (name)\"",
+                                     value="(Admins Only), Delete the queue)", inline=False)
+                help_embed.add_field(name="\"-reload\"",
+                                     value="(Admins Only), reload all configurations and reset queues)", inline=False)
+                help_embed.add_field(name="\"-empty\"",
+                                     value="(Admins Only), empty all queues)", inline=False)
             help_embed.add_field(name="\"-remove (@student)\"",
                                  value="remove the mentioned student from all queues", inline=False)
             help_embed.add_field(name="\"-shift\"",
                                  value="Toggle your availability", inline=False)
-            help_embed.add_field(name="\"-ready ("+ server.get_help_mentor() +")\"",
+            help_embed.add_field(name="\"-ready (queue_name)\"",
                                  value="Take the next person off the specified queue", inline=False)
-        help_embed.add_field(name="\"-queue (" + server.get_help() + ")\"", value="Join the selected queue",
+        help_embed.add_field(name="\"-queue (queue_name)\"", value="Join the selected queue",
                              inline=False)
         help_embed.add_field(name="\"-leave\"", value="Leave all queues", inline=False)
-        help_embed.add_field(name="\"-show ["+ server.get_help_mentor() +"]\"",
+        help_embed.add_field(name="\"-show [ queue_name ]\"",
                              value="Show all queues or the specified queue", inline=False)
         await message.channel.send(embed=help_embed)
     else:
@@ -125,6 +124,26 @@ async def leave(message):
     await message.channel.send("You have left all queues")
 
 
+def find_mentor_category(guild):
+    category = mentor_categories.get(guild)
+    if category is not None:
+        return category
+    categories = guild.categories
+    for category in categories:
+        if category.name.lower() == "mentoring":
+            mentor_categories[guild] = category
+            return category
+    return
+
+
+async def done(message):
+    server = guild_collection[message.guild.id]
+    mentor = message.author
+    if not await server.remove_mentor_channel(mentor):
+        await message.channel.send(f"Channel Removal failure, {mentor.mention} please continue with the queue.\n"
+                                   f"@GenCusterJrB#0723, please resolve this issue")
+
+
 async def ready(message):
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
@@ -134,6 +153,7 @@ async def ready(message):
     if len(divided) != 2:
         await message.channel.send("Usage: `-ready (queue)`")
         return
+    await server.remove_mentor_channel(mentor)
     destination = divided[1].lower()
     if destination in server.queues:
         target = server.queues[destination]
@@ -143,8 +163,15 @@ async def ready(message):
         else:
             student = target.get_front()
             server.leave_queues(student)
-            await message.channel.send(mentor.mention + " you are now to meet with " + student.mention)
-            server.students_helped += 1
+            topic = target.get_topic()
+            table_num = target.new_queue_table()
+            voice_channel = await client.get_guild(
+                message.guild.id).create_voice_channel(name=f"{topic}-{table_num}",
+                                                       category=find_mentor_category(message.guild))
+            invite = await voice_channel.create_invite(max_age=3 * 60)
+            await message.channel.send(f"{mentor.mention} you are now to meet with {student.mention}.\nPlease join "
+                                       f"{topic}-{table_num} {invite}")
+            server.assign_mentor(mentor, voice_channel)
     else:
         await message.channel.send("Invalid queue specified. Valid queues are: " + server.get_help())
         return
@@ -326,7 +353,6 @@ async def on_ready():
             await guild_collection[guild.id].setup(guild)
 
 
-
 @client.event
 async def on_message(message):
     if check_muted(message):
@@ -358,9 +384,12 @@ async def on_message(message):
         await reload(message)
     elif command == "-showqueues":
         await show_queues(message)
+    elif command == "-done":
+        await done(message)
 
 
 def main():
+    # who needs security...hardcode all the things
     client.run('ODA3Njc1NzI1MDQ5MTAyMzM2.YB7cog.jY41rZfw9VwXngBpPL8qBnrKWh8')  # TODO Replace with String API key
 
 

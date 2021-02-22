@@ -13,6 +13,7 @@ class Server:
         self.stat_set = dict()
         self.students_queued = 0
         self.students_helped = 0
+        self.mentor_channels = dict()
 
     async def setup(self, guild):
         for role in guild.roles:
@@ -96,10 +97,7 @@ class Server:
         return res[:-3]
 
     def validate(self, user):
-        for role in user.roles:
-            if role in self.roles.values():
-                return True
-        return False
+        return self.roles["on-duty mentor"] in user.roles or self.roles["admin"] in user.roles
 
     def admin_check(self, user):
         return self.roles["admin"] in user.roles
@@ -111,7 +109,16 @@ class Server:
         if user in self.current_students:
             self.current_students.remove(user)
 
-    def clear_stats(self):
-        self.stat_set = dict()
-        self.students_helped = 0
-        self.students_queued = 0
+    def assign_mentor(self, mentor, channel):
+        self.mentor_channels[mentor] = channel
+        return
+
+    async def remove_mentor_channel(self, mentor):
+        channel = self.mentor_channels.get(mentor)
+        if channel is None:
+            return False
+        try:
+            await channel.delete()
+        except discord.errors.NotFound:
+            return False
+        return True
