@@ -96,8 +96,13 @@ class Server:
             res += self.queues[queue].name + " | "
         return res[:-3]
 
-    def validate(self, user):
+    def validate_on_duty(self, user):
         return self.roles["on-duty mentor"] in user.roles or self.roles["admin"] in user.roles
+
+    def validate(self, user):
+        return self.roles["on-duty mentor"] in user.roles \
+               or self.roles["admin"] in user.roles \
+               or self.roles["off-duty mentor"] in user.roles
 
     def admin_check(self, user):
         return self.roles["admin"] in user.roles

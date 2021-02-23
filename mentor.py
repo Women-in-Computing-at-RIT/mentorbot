@@ -16,7 +16,7 @@ async def help_manager(message):
         help_embed.title = "Help"
         help_embed.type = "rich"
         help_embed.colour = discord.colour.Color.blue()
-        if server.validate(message.author):
+        if server.validate_on_duty(message.author):
             if server.admin_check(message.author):
                 help_embed.add_field(name="\"-add (name) [-h | parent_name]\"",
                                      value="(Admins Only), create a new queue)", inline=False)
@@ -139,6 +139,8 @@ def find_mentor_category(guild):
 async def done(message):
     server = guild_collection[message.guild.id]
     mentor = message.author
+    if not server.validate(mentor):
+        return
     if not await server.remove_mentor_channel(mentor):
         await message.channel.send(f"Channel Removal failure, {mentor.mention} please continue with the queue.\n"
                                    f"@GenCusterJrB#0723, please resolve this issue")
