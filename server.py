@@ -127,3 +127,14 @@ class Server:
         except discord.errors.NotFound:
             return False
         return True
+
+    async def toggle_shift(self, message, user):
+        if self.roles["on-duty mentor"] in user.roles:
+            await user.add_roles(self.get_role("off-duty mentor"))
+            await user.remove_roles(self.get_role("on-duty mentor"))
+            await message.channel.send(f"{message.author.mention} you are now off-duty, thank you for your help")
+        else:
+            await user.add_roles(self.get_role("on-duty mentor"))
+            await user.remove_roles(self.get_role("off-duty mentor"))
+            await message.channel.send(f"{message.author.mention} you are now on-duty, good luck :smiley:")
+        return

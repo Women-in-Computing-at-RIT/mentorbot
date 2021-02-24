@@ -3,7 +3,9 @@ import discord
 from custom_queue import Queue
 from server import Server
 
-client = discord.Client()  # Client initialization
+intents = discord.Intents.default()
+intents.members = True
+client = discord.Client(intents=intents)  # Client initialization
 guild_collection = dict()
 mentor_categories = dict()
 
@@ -202,18 +204,9 @@ async def shift(message):
     if len(divided) != 1:
         await message.channel.send("The `-shift` command takes no arguments")
         return
-    if user in server.on_duty:
-        server.on_duty.remove(user)
-        await message.channel.send("You are no longer listed as available")
-        await user.add_roles(server.get_role("off-duty mentor"))
-        await user.remove_roles(server.get_role("on-duty mentor"))
-        await who(server, message.guild)
-    else:
-        server.on_duty.append(user)
-        await message.channel.send("You are now listed as available")
-        await user.remove_roles(server.get_role("off-duty mentor"))
-        await user.add_roles(server.get_role("on-duty mentor"))
-        await who(server, message.guild)
+    await server.toggle_shift(message, user)
+    await who(message)
+    return
 
 
 async def show(message):
@@ -277,33 +270,35 @@ async def remove(message):
             await message.channel.send("Usage: `-remove (@user)")
 
 
-async def who(server, guild):
-    channel = get_channel("on-duty", guild)
-    messages = await channel.history(limit=100).flatten()
-    for message in messages:
-        await message.delete()
-    if len(server.on_duty) == 0:
-        await channel.send("Currently no mentors are on duty")
+def beautify_mentor_skills(skills):
+    if len(skills) == 0:
+        return "*"
+    skill_string = ""
+    for role in skills:
+        skill_string += role + "\n"
+    skill_string = skill_string[:-1]
+    return skill_string
+
+
+async def who(message):
+    channel = message.channel
+    server = guild_collection[message.guild.id]
+    on_duty_role = server.get_role("on-duty mentor")
+    on_duty_mentors = on_duty_role.members
+    embed = discord.Embed(title="On-Duty Mentors")
+    if len(on_duty_mentors) == 0:
+        embed.description = "There are no mentors on duty"
+        embed.colour = discord.colour.Color.red()
+        await channel.send(embed=embed)
         return
-    for student in server.on_duty:
-        staff_embed = discord.Embed()
-        try:
-            if student.nick is not None:
-                staff_embed.title = student.nick
-            else:
-                staff_embed.title = student.name
-        except:
-            staff_embed.title = student.name
-        staff_embed.type = "rich"
-        try:
-            staff_embed.colour = student.colour
-        except:
-            staff_embed.colour = discord.colour.Color.green()
-        staff_embed.description = ""
-        for role in student.roles:
-            if role.name.lower() in server.queues:
-                staff_embed.description += role.name + "\n"
-        await channel.send(embed=staff_embed)
+    embed.colour = discord.colour.Color.green()
+    for mentor in on_duty_mentors:
+        embed.add_field(name=mentor.nick,
+                        value=beautify_mentor_skills([topic.name[len("Mentor - "):] for topic in mentor.roles
+                                                      if topic.name.startswith("Mentor - ")]),
+                        inline=True)
+    await channel.send(embed=embed)
+    return
 
 
 async def reload(message):
@@ -388,11 +383,13 @@ async def on_message(message):
         await show_queues(message)
     elif command == "-done":
         await done(message)
+    elif command == "-who":
+        await who(message)
 
 
 def main():
     # who needs security...hardcode all the things
-    client.run('ODA3Njc1NzI1MDQ5MTAyMzM2.YB7cog.jY41rZfw9VwXngBpPL8qBnrKWh8')  # TODO Replace with String API key
+    client.run('ODA3Njc1NzI1MDQ5MTAyMzM2.YB7cog.jY41rZfw9VwXngBpPL8qBnrKWh8')
 
 
 if __name__ == '__main__':
