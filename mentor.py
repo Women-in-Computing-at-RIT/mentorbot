@@ -34,11 +34,14 @@ async def help_manager(message):
                                  value="Toggle your availability", inline=False)
             help_embed.add_field(name="\"-ready (queue_name)\"",
                                  value="Take the next person off the specified queue", inline=False)
+            help_embed.add_field(name="\"-done\"", value="Removes previous voice channel", inline=False)
         help_embed.add_field(name="\"-queue (queue_name)\"", value="Join the selected queue",
                              inline=False)
         help_embed.add_field(name="\"-leave\"", value="Leave all queues", inline=False)
         help_embed.add_field(name="\"-show [ queue_name ]\"",
                              value="Show all queues or the specified queue", inline=False)
+        help_embed.add_field(name="\"-queues\"", value="Show all queues", inline=False)
+        help_embed.add_field(name="\"-who\"", value="Shows all on-duty mentors", inline=False)
         await message.channel.send(embed=help_embed)
     else:
         message.channel.send("Usage: `-help`")
@@ -274,9 +277,18 @@ def beautify_mentor_skills(skills):
     if len(skills) == 0:
         return "*"
     skill_string = ""
+    double_skill = False
     for role in skills:
-        skill_string += role + "\n"
-    skill_string = skill_string[:-1]
+        skill_string += role
+        if double_skill:
+            skill_string += "\n"
+        else:
+            skill_string += ", "
+        double_skill = not double_skill
+    if double_skill:
+        skill_string = skill_string[:-2]
+    else:
+        skill_string = skill_string[:-1]
     return skill_string
 
 
@@ -379,7 +391,7 @@ async def on_message(message):
         await remove(message)
     elif command == "-reload":
         await reload(message)
-    elif command == "-showqueues":
+    elif command == "-queues":
         await show_queues(message)
     elif command == "-done":
         await done(message)
