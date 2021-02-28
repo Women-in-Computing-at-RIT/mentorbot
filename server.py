@@ -45,17 +45,17 @@ class Server:
                 if len(line.split(",")) == 1:  # If it doesn't have a parent
                     if line.startswith("!"):  # If it is not joinable
                         name = line[1:].strip()
-                        self.queues[name] = Queue(False, name)
+                        self.queues[name.lower()] = Queue(False, name)
                     else:
                         name = line.strip()
-                        self.queues[name] = Queue(True, name)
+                        self.queues[name.lower()] = Queue(True, name)
                 else:
                     temp = line.strip().split(",")
                     name = temp[0]
                     parent = temp[1]
-                    self.queues[name] = Queue(True, name)
-                    self.queues[parent].children.append(self.queues[name])
-                    self.queues[name].parent = self.queues[parent]
+                    self.queues[name.lower()] = Queue(True, name)
+                    self.queues[parent].children.append(self.queues[name.lower()])
+                    self.queues[name.lower()].parent = self.queues[parent]
             file.close()
         except FileNotFoundError:
             pass

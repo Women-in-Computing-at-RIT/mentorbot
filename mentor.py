@@ -44,7 +44,7 @@ async def help_manager(message):
         help_embed.add_field(name="\"-who\"", value="Shows all on-duty mentors", inline=False)
         await message.channel.send(embed=help_embed)
     else:
-        message.channel.send("Usage: `-help`")
+        await message.channel.send("Usage: `-help`")
         return
 
 
@@ -95,7 +95,7 @@ async def enqueue(message):
     if len(divided) != 2:
         await message.channel.send("Please specify a valid queue (" + server.get_help() + ") after a space")
         return
-    destination = divided[1]
+    destination = divided[1].lower()
     if destination in server.queues and server.queues[destination].joinable:
         if message.author in server.current_students:
             if message.author in server.queues[destination].students:
@@ -109,8 +109,20 @@ async def enqueue(message):
             await server.queues[destination].join_queue(message)
             server.current_students.append(message.author)
             server.students_queued += 1
-            if len(server.on_duty) == 0:
+            mentors = server.get_role("on-duty mentor").members
+            if len(mentors) == 0:
                 await message.channel.send("Please note that there are currently no mentors on duty. " +
+                                           "You may experience long queueing times. " +
+                                           "You can use the `-leave` command to exit the queue for now if desired.")
+                return
+            on_duty = False
+            for mentor in mentors:
+                for role in mentor.roles:
+                    if role.name.lower() == f"Mentor - {destination}".lower():
+                        on_duty = True
+                        break
+            if not on_duty:
+                await message.channel.send("Please note that there are currently no mentors on duty for this queue. " +
                                            "You may experience long queueing times. " +
                                            "You can use the `-leave` command to exit the queue for now if desired.")
             return
@@ -305,7 +317,10 @@ async def who(message):
         return
     embed.colour = discord.colour.Color.green()
     for mentor in on_duty_mentors:
-        embed.add_field(name=mentor.nick,
+        name = mentor.nick
+        if name is None:
+            name = mentor.name
+        embed.add_field(name=name,
                         value=beautify_mentor_skills([topic.name[len("Mentor - "):] for topic in mentor.roles
                                                       if topic.name.startswith("Mentor - ")]),
                         inline=True)
