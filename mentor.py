@@ -412,6 +412,8 @@ async def on_message(message):
         await done(message)
     elif command == "-who":
         await who(message)
+    elif command == "-bye":
+        await message.channel.send(f"Until Next Year...")
 
 
 def main():
