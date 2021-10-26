@@ -5,6 +5,7 @@ from server import Server
 
 intents = discord.Intents.default()
 intents.members = True
+intents.messages = True
 client = discord.Client(intents=intents)  # Client initialization
 guild_collection = dict()
 mentor_categories = dict()
@@ -156,7 +157,7 @@ def find_mentor_category(guild):
 async def done(message):
     server = guild_collection[message.guild.id]
     mentor = message.author
-    if not server.validate(mentor):
+    if not server.validate_mentor(mentor):
         return
     if not await server.remove_mentor_channel(mentor):
         await message.channel.send(f"Channel Removal failure, {mentor.mention} please continue with the queue.\n"
@@ -167,7 +168,7 @@ async def ready(message):
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mentor = message.author
-    if not server.validate(mentor):
+    if not server.validate_mentor(mentor):
         return
     if len(divided) != 2:
         await message.channel.send("Usage: `-ready (queue)`")
@@ -214,7 +215,7 @@ async def shift(message):
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     user = message.author
-    if not server.validate(user):
+    if not server.validate_mentor(user):
         return
     if len(divided) != 1:
         await message.channel.send("The `-shift` command takes no arguments")

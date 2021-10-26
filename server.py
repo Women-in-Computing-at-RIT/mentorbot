@@ -21,15 +21,15 @@ class Server:
                 self.roles["off-duty mentor"] = role
             elif "on-duty mentor" in role.name.lower():
                 self.roles["on-duty mentor"] = role
-            elif "admin" in role.name.lower():
-                self.roles["admin"] = role
+            elif "botsmith" in role.name.lower():
+                self.roles["botsmith"] = role
         if len(self.roles) != 3:
             if "off-duty mentor" not in self.roles:
                 self.roles["off-duty mentor"] = await guild.create_role(name="off-duty mentor")
             if "on-duty mentor" not in self.roles:
                 self.roles["on-duty mentor"] = await guild.create_role(name="on-duty mentor")
-            if "admin" not in self.roles:
-                self.roles["admin"] = await guild.create_role(name="admin")
+            if "botsmith" not in self.roles:
+                self.roles["botsmith"] = await guild.create_role(name="botsmith")
 
     def get_role(self, target):
         if target in self.roles:
@@ -97,15 +97,19 @@ class Server:
         return res[:-3]
 
     def validate_on_duty(self, user):
-        return self.roles["on-duty mentor"] in user.roles or self.roles["admin"] in user.roles
+        return self.roles["on-duty mentor"] in user.roles
+
+    def validate_mentor(self, user):
+        return self.roles["on-duty mentor"] in user.roles \
+               or self.roles["off-duty mentor"] in user.roles
 
     def validate(self, user):
         return self.roles["on-duty mentor"] in user.roles \
-               or self.roles["admin"] in user.roles \
+               or self.roles["botsmith"] in user.roles \
                or self.roles["off-duty mentor"] in user.roles
 
     def admin_check(self, user):
-        return self.roles["admin"] in user.roles
+        return self.roles["botsmith"] in user.roles
 
     def leave_queues(self, user):
         for queue in self.queues:
