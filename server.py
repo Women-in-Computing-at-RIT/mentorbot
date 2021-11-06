@@ -148,7 +148,7 @@ class Server:
 
     def admin_check(self, user):
         """
-        Check if a user is an admin
+        Check if a user is an admin ("botsmith") role
         :param user: user to be checked
         :return: true if admin, false otherwise
         """
@@ -177,6 +177,7 @@ class Server:
     async def remove_mentor_channel(self, mentor):
         """
         Delete a mentoring channel after it has finished being used
+        # TODO: make to voice channel created in a category instead of at top of server
         :param mentor: Mentor user
         :return: true if successful, false otherwise
         """

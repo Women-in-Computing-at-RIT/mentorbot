@@ -213,7 +213,7 @@ async def done(message):
     if not server.validate_mentor(mentor):
         return
     # Notify Alex to resolve this issue
-    # TODO: if this bot is used after WiCHacks, please change user to be mentioned to current Logistics head
+    # TODO: If this bot is used after WiCHacks 2022, please change user to be mentioned to current Logistics head
     if not await server.remove_mentor_channel(mentor):
         await message.channel.send(f"Channel Removal failure, {mentor.mention} please continue with the queue.\n"
                                    f"@GenCusterJrB#0723, please resolve this issue")
@@ -305,6 +305,7 @@ async def shift(message):
 async def show(message):
     """
     Shows all queues or the specified queue
+    # TODO: add all column
     :param message: Discord message
     """
     divided = message.content.strip().split()
@@ -350,10 +351,12 @@ async def delete(message):
     target = divided[1].lower()  # Queue to be deleted
     # If the queue to be deleted exists...
     if target in server.queues:
+        # Delete child queues before parent queue
         if server.queues[target].children:
             await message.send("The specified hidden queue contains children. they must be deleted first")
             return
         else:
+            # Remove child queue from its parent if it has one
             if server.queues[target].parent:
                 server.queues[target].parent.children.remove(server.queues[target])
             del server.queues[target]
@@ -455,19 +458,20 @@ async def reload(message):
 
 async def show_queues(message):
     """
-
-    :param message:
-    :return:
+    Show all queues
+    :param message: Discord message
     """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mstr_str = "The Queues are:\n"
     if len(divided) == 1:
+        # Print all queues that can be joined
         for queue in server.queues:
             if server.queues[queue].joinable:
                 mstr_str += server.queues[queue].get_topic() + "\n"
         await message.channel.send(mstr_str)
         return
+    # Incorrect arguments
     else:
         await message.channel.send("Usage: `-showqueues")
         return
