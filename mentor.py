@@ -14,7 +14,6 @@ mentor_categories = dict()
 async def help_manager(message):
     """
     Prints help command
-    TODO: refactor to alphabetical order and role permissions per command
     :param message: Discord message
     """
     divided = message.content.strip().split()
@@ -26,28 +25,33 @@ async def help_manager(message):
         help_embed.colour = discord.colour.Color.blue()
         if server.validate_on_duty(message.author):
             if server.admin_check(message.author):
-                help_embed.add_field(name="\"-add (name) [-h | parent_name]\"",
-                                     value="(Admins Only), create a new queue)", inline=False)
-                help_embed.add_field(name="\"-delete (name)\"",
-                                     value="(Admins Only), Delete the queue)", inline=False)
-                help_embed.add_field(name="\"-reload\"",
-                                     value="(Admins Only), reload all configurations and reset queues)", inline=False)
-                help_embed.add_field(name="\"-empty\"",
-                                     value="(Admins Only), empty all queues)", inline=False)
-            help_embed.add_field(name="\"-remove (@student)\"",
-                                 value="remove the mentioned student from all queues", inline=False)
-            help_embed.add_field(name="\"-shift\"",
-                                 value="Toggle your availability", inline=False)
-            help_embed.add_field(name="\"-ready (queue_name)\"",
+                help_embed.add_field(name="**ADMIN ONLY COMMANDS**", value="*[role: botsmith]*", inline=False)
+                help_embed.add_field(name="💜 \"-add (name) [-h | parent_name]\"",
+                                     value="Create a new queue", inline=False)
+                help_embed.add_field(name="💜 \"-delete (name)\"",
+                                     value="Delete the queue", inline=False)
+                help_embed.add_field(name="💜 \"-empty\"",
+                                     value="Empty all queues", inline=False)
+                help_embed.add_field(name="💜 \"-reload\"",
+                                     value="Reload all configurations and reset queues)", inline=False)
+            help_embed.add_field(name="**MENTOR ONLY COMMANDS**", value="*[role: on-duty mentor, off-duty mentor]*",
+                                 inline=False)
+            help_embed.add_field(name="💜 \"-done\"", value="Removes previous voice channel", inline=False)
+            help_embed.add_field(name="💜 \"-ready (queue_name)\"",
                                  value="Take the next person off the specified queue", inline=False)
-            help_embed.add_field(name="\"-done\"", value="Removes previous voice channel", inline=False)
-        help_embed.add_field(name="\"-queue (queue_name)\"", value="Join the selected queue",
+            help_embed.add_field(name="💜 \"-remove (@student)\"",
+                                 value="Remove the mentioned student from all queues", inline=False)
+            help_embed.add_field(name="💜 \"-shift\"",
+                                 value="Toggle your availability", inline=False)
+        help_embed.add_field(name="**GENERAL COMMANDS**", value="*[available for all to use]*",
                              inline=False)
-        help_embed.add_field(name="\"-leave\"", value="Leave all queues", inline=False)
-        help_embed.add_field(name="\"-show [ queue_name ]\"",
-                             value="Show all queues or the specified queue", inline=False)
-        help_embed.add_field(name="\"-queues\"", value="Show all queues", inline=False)
-        help_embed.add_field(name="\"-who\"", value="Shows all on-duty mentors", inline=False)
+        help_embed.add_field(name="💜 \"-leave\"", value="Leave all queues", inline=False)
+        help_embed.add_field(name="💜 \"-show [ queue_name ]\"",
+                             value="\t Show all queues or the specified queue", inline=False)
+        help_embed.add_field(name="💜 \"-queue (queue_name)\"", value="Join the selected queue",
+                             inline=False)
+        help_embed.add_field(name="💜 \"-queues\"", value="Show all queues", inline=False)
+        help_embed.add_field(name="💜 \"-who\"", value="Shows all on-duty mentors", inline=False)
         await message.channel.send(embed=help_embed)
     # Incorrect arguments
     else:
