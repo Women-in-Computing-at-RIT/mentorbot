@@ -141,7 +141,6 @@ async def enqueue(message):
                                            " or `-leave` to leave all queues")
                 return
         # No on duty mentors to queue
-        # TODO: add to general queue if no mentors
         else:
             # Added to queue
             await server.queues[destination].join_queue(message)
@@ -309,7 +308,6 @@ async def shift(message):
 async def show(message):
     """
     Shows all queues or the specified queue
-    # TODO: add all column
     :param message: Discord message
     """
     divided = message.content.strip().split()
