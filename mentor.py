@@ -12,6 +12,11 @@ mentor_categories = dict()
 
 
 async def help_manager(message):
+    """
+    Prints help command
+    TODO: refactor to alphabetical order and role permissions per command
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     if len(divided) == 1:
@@ -44,38 +49,54 @@ async def help_manager(message):
         help_embed.add_field(name="\"-queues\"", value="Show all queues", inline=False)
         help_embed.add_field(name="\"-who\"", value="Shows all on-duty mentors", inline=False)
         await message.channel.send(embed=help_embed)
+    # Incorrect arguments
     else:
         await message.channel.send("Usage: `-help`")
         return
 
 
 async def add(message):
+    """
+    Add queue to the mentoring system
+    Admin only command
+    :param message:
+    :return:
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
+    # Check if a user is an admin
     if not server.admin_check(message.author):
         return
     # Add a new queue to the system
     if len(divided) == 2:
         name = divided[1].lower()
+        # User tried to add a queue that already exists
         if name in server.queues:
             await message.channel.send("This queue already exists")
             return
+        # Successful addition
         else:
             server.queues[name] = Queue(True, name)
             await message.channel.send("New queue has been added to the system")
             server.save()
+    # Check parent queue (see text files, for example, all and languages are parent queues)
+    # Child should be added to parent queues as well
     elif len(divided) == 3:
         name = divided[1].lower()
+        # Queue already exists
         if name in server.queues:
             await message.channel.send("This queue already exists")
             return
+        # TODO: what is -h?
         if divided[2].lower() == "-h":
             server.queues[name] = Queue(False, name)
             await message.channel.send("New queue has been added to the system")
             server.save()
             return
         else:
+            # Get parent name
             parent = divided[2].lower()
+            # Add new child queue to parent queue
             if parent in server.queues:
                 server.queues[name] = Queue(True, name)
                 server.queues[name].parent = server.queues[parent]
@@ -83,21 +104,29 @@ async def add(message):
                 await message.channel.send("New queue has been added to the system")
                 server.save()
                 return
+            # Parent does not exist
             else:
                 await message.channel.send("The specified parent is not in the system")
                 return
+    # Incorrect arguments
     else:
         await message.channel.send("Usage: `-add (queue) [-h | parent_queue]`")
         return
 
 
 async def enqueue(message):
+    """
+    Queue a user for a mentoring queue
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
+    # Invalid arguments
     if len(divided) != 2:
         await message.channel.send("Please specify a valid queue (" + server.get_help() + ") after a space")
         return
     destination = divided[1].lower()
+    # If the queue can be joined...
     if destination in server.queues and server.queues[destination].joinable:
         if message.author in server.current_students:
             if message.author in server.queues[destination].students:
@@ -107,11 +136,16 @@ async def enqueue(message):
                 await message.channel.send("You are already in a queue. Use `-show` to see which queue you are in" +
                                            " or `-leave` to leave all queues")
                 return
+        # No on duty mentors to queue
+        # TODO: add to general queue if no mentors
         else:
+            # Added to queue
             await server.queues[destination].join_queue(message)
             server.current_students.append(message.author)
             server.students_queued += 1
+            # Get number of mentors available for this queue
             mentors = server.get_role("on-duty mentor").members
+            # No mentors for this queue, long queue time warning
             if len(mentors) == 0:
                 await message.channel.send("Please note that there are currently no mentors on duty. " +
                                            "You may experience long queueing times. " +
@@ -123,11 +157,13 @@ async def enqueue(message):
                     if role.name.lower() == f"Mentor - {destination}".lower():
                         on_duty = True
                         break
+            # No mentors on-duty for this queue, long queue time warning
             if not on_duty:
                 await message.channel.send("Please note that there are currently no mentors on duty for this queue. " +
                                            "You may experience long queueing times. " +
                                            "You can use the `-leave` command to exit the queue for now if desired.")
             return
+    # Invalid queue
     if destination not in server.queues or destination in server.queues and not server.queues[destination].joinable:
         await message.channel.send("Please specify a valid queue (" + server.get_help() + ") after a space")
         return
@@ -149,6 +185,11 @@ async def leave(message):
 
 
 def find_mentor_category(guild):
+    """
+    Find the category mentor belongs to
+    TODO: verify with Alex
+    :param guild: Collection of users and channels
+    """
     category = mentor_categories.get(guild)
     if category is not None:
         return category
@@ -365,14 +406,15 @@ def beautify_mentor_skills(skills):
 
 async def who(message):
     """
-
-    :param message:
+    Prints all available mentors for respective queues
+    :param message: Discord message
     """
     channel = message.channel
     server = guild_collection[message.guild.id]
     on_duty_role = server.get_role("on-duty mentor")
     on_duty_mentors = on_duty_role.members
     embed = discord.Embed(title="On-Duty Mentors")
+    # No mentors on duty
     if len(on_duty_mentors) == 0:
         embed.description = "There are no mentors on duty"
         embed.colour = discord.colour.Color.red()
@@ -441,7 +483,7 @@ def get_channel(target, guild):
 def check_muted(message) -> bool:
     """
     Helper method to check if user is muted
-    :param message:
+    :param message: Discord message
     """
     author = message.author
     if isinstance(author, discord.User):
@@ -462,8 +504,15 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    """
+    On message delegation of commands
+    TODO: refactor with @client.command tag?
+    :param message: Discord message
+    """
+    # Check if user is muted
     if check_muted(message):
         return
+    # Check command prefix
     if not message.content.startswith("-"):
         return
     command = message.content.strip().split()[0].lower()
