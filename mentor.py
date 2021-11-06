@@ -54,6 +54,7 @@ async def add(message):
     server = guild_collection[message.guild.id]
     if not server.admin_check(message.author):
         return
+    # Add a new queue to the system
     if len(divided) == 2:
         name = divided[1].lower()
         if name in server.queues:
@@ -133,8 +134,13 @@ async def enqueue(message):
 
 
 async def leave(message):
+    """
+    Leave all user queues
+    :param message: Discord message
+    """
     server = guild_collection[message.guild.id]
     divider = message.content.strip().split()
+    # Incorrect arguments provided
     if len(divider) != 1:
         await message.channel.send("The `-leave` command takes no arguments")
         return
@@ -155,21 +161,36 @@ def find_mentor_category(guild):
 
 
 async def done(message):
+    """
+    Removes previous voice channel
+    Mentor only command
+    :param message: Discord message
+    """
     server = guild_collection[message.guild.id]
     mentor = message.author
+    # Check if user is a mentor
     if not server.validate_mentor(mentor):
         return
+    # Notify Alex to resolve this issue
+    # TODO: if this bot is used after WiCHacks, please change user to be mentioned to current Logistics head
     if not await server.remove_mentor_channel(mentor):
         await message.channel.send(f"Channel Removal failure, {mentor.mention} please continue with the queue.\n"
                                    f"@GenCusterJrB#0723, please resolve this issue")
 
 
 async def ready(message):
+    """
+    Take the next person off the specified queue
+    Mentor only command
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mentor = message.author
+    # Check if user is a mentor
     if not server.validate_mentor(mentor):
         return
+    # Incorrect arguments
     if len(divided) != 2:
         await message.channel.send("Usage: `-ready (queue)`")
         return
@@ -177,13 +198,18 @@ async def ready(message):
     destination = divided[1].lower()
     if destination in server.queues:
         target = server.queues[destination]
+        # Empty queue that mentor ready'd for
         if len(target.students) == 0:
             await message.channel.send("No students are currently queued")
             return
         else:
+            # Get first student
             student = target.get_front()
+            # Remove student from all queues
             server.leave_queues(student)
+            # Get queue topic
             topic = target.get_topic()
+            # Create a new mentoring table for mentor and hacker to join, assign mentor and notify user
             table_num = target.new_queue_table()
             voice_channel = await client.get_guild(
                 message.guild.id).create_voice_channel(name=f"{topic}-{table_num}",
@@ -192,12 +218,18 @@ async def ready(message):
             await message.channel.send(f"{mentor.mention} you are now to meet with {student.mention}.\nPlease join "
                                        f"{topic}-{table_num} {invite}")
             server.assign_mentor(mentor, voice_channel)
+    # Invalid queue provided
     else:
         await message.channel.send("Invalid queue specified. Valid queues are: " + server.get_help())
         return
 
 
 async def empty(message):
+    """
+    Empty all queues
+    Admin only command
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     user = message.author
@@ -212,6 +244,10 @@ async def empty(message):
 
 
 async def shift(message):
+    """
+    Toggle mentor availability
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     user = message.author
@@ -226,6 +262,10 @@ async def shift(message):
 
 
 async def show(message):
+    """
+    Shows all queues or the specified queue
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mstr_str = ""
@@ -253,14 +293,21 @@ async def show(message):
 
 
 async def delete(message):
+    """
+    Deletes a queue in mentor system
+    :param message: Discord message sent
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
+    # Command only allowed for admins
     if not server.admin_check(message.author):
         return
+    # Incorrect arguments provided
     if len(divided) != 2:
         await message.send("Usage: `-delete (queue)`")
         return
-    target = divided[1].lower()
+    target = divided[1].lower()  # Queue to be deleted
+    # If the queue to be deleted exists...
     if target in server.queues:
         if server.queues[target].children:
             await message.send("The specified hidden queue contains children. they must be deleted first")
@@ -271,22 +318,33 @@ async def delete(message):
             del server.queues[target]
             await message.channel.send("The specified queue has been deleted")
             server.save()
+    # Queue does not exist
     else:
         await message.send("Invalid queue")
         return
 
 
 async def remove(message):
+    """
+    Removes mentioned user from the queues
+    :param message: Discord message sent
+    """
     server = guild_collection[message.guild.id]
     if server.validate(message.author):
+        # Removes mentioned user
         if len(message.mentions) == 1:
             server.leave_queues(message.mentions[0])
             await message.channel.send(message.mentions[0].name + " was removed from all queues")
+        # Incorrect arguments provided
         else:
             await message.channel.send("Usage: `-remove (@user)")
 
 
 def beautify_mentor_skills(skills):
+    """
+    Pretty print mentor skills
+    :param skills: mentor's listed skills
+    """
     if len(skills) == 0:
         return "*"
     skill_string = ""
@@ -306,6 +364,10 @@ def beautify_mentor_skills(skills):
 
 
 async def who(message):
+    """
+
+    :param message:
+    """
     channel = message.channel
     server = guild_collection[message.guild.id]
     on_duty_role = server.get_role("on-duty mentor")
@@ -330,18 +392,31 @@ async def who(message):
 
 
 async def reload(message):
+    """
+    Reload all configurations and queues
+    Admin only command
+    :param message: Discord message
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
+    # Checks if user is an admin
     if not server.admin_check(message.author):
         return
+    # Reload
     if len(divided) == 1:
         await server.reload(message.guild)
         await message.channel.send("System reset")
+    # Incorrect argument
     else:
         await message.channel.send("`-reload` does not accept any arguments")
 
 
 async def show_queues(message):
+    """
+
+    :param message:
+    :return:
+    """
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mstr_str = "The Queues are:\n"
@@ -364,6 +439,10 @@ def get_channel(target, guild):
 
 
 def check_muted(message) -> bool:
+    """
+    Helper method to check if user is muted
+    :param message:
+    """
     author = message.author
     if isinstance(author, discord.User):
         return
@@ -371,6 +450,9 @@ def check_muted(message) -> bool:
 
 @client.event
 async def on_ready():
+    """
+    Bot method that runs on successful start up
+    """
     for guild in client.guilds:
         if guild.id not in guild_collection:
             guild_collection[guild.id] = Server(guild.id)
