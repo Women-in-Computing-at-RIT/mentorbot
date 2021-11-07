@@ -313,6 +313,7 @@ async def show(message):
     divided = message.content.strip().split()
     server = guild_collection[message.guild.id]
     mstr_str = ""
+    # All queues that are filled
     if len(divided) == 1:
         if len(server.current_students) == 0:
             await message.channel.send("All queues are currently empty")
@@ -323,14 +324,23 @@ async def show(message):
                     mstr_str += str(server.queues[queue])
             await message.channel.send(mstr_str)
             return
+    # Specific queue
     elif len(divided) == 2:
         course = divided[1].lower()
         if course in server.queues:
-            await message.channel.send(str(server.queues[course]))
-            return
+            if len(server.queues[course].students) == 0:
+                mstr_str += "Queue for " + course + " is empty. \n\n **Current filled queues:** \n"
+                for queue in server.queues:
+                    if server.queues[queue].joinable and len(server.queues[queue].students) != 0:
+                        mstr_str += str(server.queues[queue])
+                await message.channel.send(mstr_str)
+            else:
+                await message.channel.send(str(server.queues[course]))
+                return
         else:
             await message.channel.send("Please specify a valid queue (" + server.get_help() + ") after a space")
             return
+    # Incorrect arguments
     else:
         await message.channel.send("Usage: `-show [queue]`")
         return
