@@ -57,21 +57,8 @@ class Server:
         try:
             file = open(str(self.guild_id), "r")
             for line in file:
-                line = line.strip()
-                if len(line.split(",")) == 1:  # If it doesn't have a parent
-                    if line.startswith("!"):  # If it is not able to be joined
-                        name = line[1:].strip()
-                        self.queues[name.lower()] = Queue(False, name)
-                    else:
-                        name = line.strip()
-                        self.queues[name.lower()] = Queue(True, name)
-                else:
-                    temp = line.strip().split(",")
-                    name = temp[0]
-                    parent = temp[1]
-                    self.queues[name.lower()] = Queue(True, name)
-                    self.queues[parent].children.append(self.queues[name.lower()])
-                    self.queues[name.lower()].parent = self.queues[parent]
+                name = line.strip()
+                self.queues[name.lower()] = Queue(True, name)
             file.close()
         except FileNotFoundError:
             pass
@@ -109,8 +96,7 @@ class Server:
     def get_help(self):
         res = ""
         for queue in self.queues:
-            if not self.queues[queue].children:
-                res += self.queues[queue].name + " | "
+            res += self.queues[queue].name + " | "
         return res[:-3]
 
     def get_help_mentor(self):
@@ -148,7 +134,7 @@ class Server:
 
     def admin_check(self, user):
         """
-        Check if a user is an admin ("botsmith") role
+        Check if a user is an admin ("botsmith")
         :param user: user to be checked
         :return: true if admin, false otherwise
         """
@@ -169,7 +155,7 @@ class Server:
         """
         Assign a mentor role to a user
         :param mentor: user to be assigned
-        :param channel: collection of channels and users
+        :param channel: Discord channel
         """
         self.mentor_channels[mentor] = channel
         return
@@ -200,10 +186,10 @@ class Server:
         if self.roles["on-duty mentor"] in user.roles:
             await user.add_roles(self.get_role("off-duty mentor"))
             await user.remove_roles(self.get_role("on-duty mentor"))
-            await message.channel.send(f"{message.author.mention} you are now off-duty, thank you for your help")
+            await message.channel.send(f"{user.mention} you are now off-duty, thank you for your help!")
         # On-duty
         else:
             await user.add_roles(self.get_role("on-duty mentor"))
             await user.remove_roles(self.get_role("off-duty mentor"))
-            await message.channel.send(f"{message.author.mention} you are now on-duty, good luck :smiley:")
+            await message.channel.send(f"{user.mention} you are now on-duty, good luck! :smiley:")
         return
