@@ -1,6 +1,3 @@
-import discord
-
-
 class Queue:
     """
     Custom queue class created for Mentor Bot
@@ -8,8 +5,6 @@ class Queue:
 
     def __init__(self, joinable, name):
         self.joinable = joinable
-        self.parent = None
-        self.children = []
         self.students = []
         self.name = name
         self.tables = 1
@@ -22,8 +17,6 @@ class Queue:
         self.students.append(message.author)
         await message.channel.send("You have joined the " + self.name +
                                    " queue. You are in position #" + str(len(self.students)))
-        if self.parent:
-            await self.parent.join_queue(message)
 
     def get_front(self):
         """
