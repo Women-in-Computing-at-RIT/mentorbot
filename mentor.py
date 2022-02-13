@@ -241,7 +241,7 @@ async def ready(message):
         # None of the queues checked had anyone who needed help
         if not does_anyone_need_help:
             await message.channel.send("No students are currently queued or are queued for your skills. You can still"
-                                       "help in different categories by specifying skill with -ready command!")
+                                       " help in different categories by specifying skill with -ready command!")
             return
     # 2 args "-ready <queue>"
     else:
